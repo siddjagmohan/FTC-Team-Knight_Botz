@@ -1,0 +1,94 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name = "Mecanum TeleOp", group = "TeleOp")
+public class MecanumTeleOp extends LinearOpMode {
+
+    // Same directions as Test.java (the ones that work)
+    static final DcMotor.Direction LF_DIR =
+            DcMotor.Direction.REVERSE;
+    static final DcMotor.Direction LB_DIR =
+            DcMotor.Direction.FORWARD;
+    static final DcMotor.Direction RF_DIR =
+            DcMotor.Direction.FORWARD;
+    static final DcMotor.Direction RB_DIR =
+            DcMotor.Direction.REVERSE;
+
+    // Max power, 0.0 to 1.0
+    static final double FULL_SPEED = 1.0;
+    static final double SLOW_SPEED = 0.4;
+
+    private DcMotor leftFront, rightFront;
+    private DcMotor leftBack, rightBack;
+
+    @Override
+    public void runOpMode() {
+
+        leftFront = hardwareMap.get(
+                DcMotor.class, "leftFront");
+        rightFront = hardwareMap.get(
+                DcMotor.class, "rightFront");
+        leftBack = hardwareMap.get(
+                DcMotor.class, "leftBack");
+        rightBack = hardwareMap.get(
+                DcMotor.class, "rightBack");
+
+        leftFront.setDirection(LF_DIR);
+        leftBack.setDirection(LB_DIR);
+        rightFront.setDirection(RF_DIR);
+        rightBack.setDirection(RB_DIR);
+
+        DcMotor.ZeroPowerBehavior brake =
+                DcMotor.ZeroPowerBehavior.BRAKE;
+        leftFront.setZeroPowerBehavior(brake);
+        rightFront.setZeroPowerBehavior(brake);
+        leftBack.setZeroPowerBehavior(brake);
+        rightBack.setZeroPowerBehavior(brake);
+
+        DcMotor.RunMode mode =
+                DcMotor.RunMode.RUN_WITHOUT_ENCODER;
+        leftFront.setMode(mode);
+        rightFront.setMode(mode);
+        leftBack.setMode(mode);
+        rightBack.setMode(mode);
+
+        telemetry.addData("Status", "Ready");
+        telemetry.update();
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            // Stick up gives a negative number, so flip it
+            double forward = -gamepad1.left_stick_y;
+            double strafe = gamepad1.left_stick_x * 1.1;
+            double turn = gamepad1.right_stick_x;
+
+            // Hold right bumper to drive slow
+            double speed = gamepad1.right_bumper
+                    ? SLOW_SPEED : FULL_SPEED;
+
+            // Keep every wheel between -1 and 1
+            double max = Math.max(
+                    Math.abs(forward) + Math.abs(strafe)
+                            + Math.abs(turn), 1.0);
+
+            double lf = (forward + strafe + turn) / max;
+            double rf = (forward - strafe - turn) / max;
+            double lb = (forward - strafe + turn) / max;
+            double rb = (forward + strafe - turn) / max;
+
+            leftFront.setPower(lf * speed);
+            rightFront.setPower(rf * speed);
+            leftBack.setPower(lb * speed);
+            rightBack.setPower(rb * speed);
+
+            telemetry.addData("Speed", speed);
+            telemetry.addData("LF / RF", "%.2f / %.2f", lf, rf);
+            telemetry.addData("LB / RB", "%.2f / %.2f", lb, rb);
+            telemetry.update();
+        }
+    }
+}
